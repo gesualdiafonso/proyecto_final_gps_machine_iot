@@ -1,96 +1,96 @@
-# 🛰️ ESP32 GPS Tracker com Supabase e Detecção de Movimento
+# 🛰️ ESP32 GPS Tracker con Supabase y Detección de Movimiento
 
-Este projeto implementa um sistema de rastreamento para dispositivos IoT utilizando um módulo ESP32 e um receptor GPS Neo-6M. O dispositivo é capaz de detectar se está estático ou em movimento e sincronizar sua localização, estado e metadados com um serviço de backend em nuvem (Supabase) por meio de HTTPS.
+Este proyecto implementa un sistema de rastreo para dispositivos IoT utilizando un módulo ESP32 y un receptor GPS Neo-6M. El dispositivo es capaz de detectar si está estático o en movimiento y sincronizar su ubicación, estado y metadatos con un servicio de backend en la nube (Supabase) a través de HTTPS.
 
-## 🛠️ Componentes Principais
+## 🛠️ Componentes Principales
 
-| Componente       | Descrição                                                                 |
-|------------------|---------------------------------------------------------------------------|
-| **Microcontrolador ESP32** | Gerencia Wi-Fi, comunicação serial, GPIO e protocolo HTTP.             |
-| **Módulo GPS Neo-6M**     | Obtém coordenadas, velocidade e tempo.                                  |
-| **Serviço Cloud (Supabase)** | Função Edge do Supabase para atuar como API de recepção e armazenamento de dados. |
-| **Indicadores LED**       | LEDs de estado (Vermelho, Amarelo, Verde) indicam o status do dispositivo. |
+| Componente                 | Descripción                                                                 |
+|---------------------------|-----------------------------------------------------------------------------|
+| **Microcontrolador ESP32** | Gestiona Wi-Fi, comunicación serial, GPIO y el protocolo HTTP.               |
+| **Módulo GPS Neo-6M**       | Obtiene coordenadas, velocidad y tiempo.                                     |
+| **Servicio Cloud (Supabase)** | Función Edge de Supabase que actúa como API para recibir y almacenar datos. |
+| **Indicadores LED**         | LEDs de estado (Rojo, Amarillo, Verde) indican el estado del dispositivo.    |
 
-## ⚙️ Configuração e Dependências
+## ⚙️ Configuración y Dependencias
 
-Este projeto requer as seguintes bibliotecas:
+Este proyecto requiere las siguientes librerías:
 
-- **TinyGPSPlus.h**: Para processamento e decodificação das mensagens NMEA do módulo GPS.
-- **WiFi.h**: Para gerenciar a conexão Wi-Fi do ESP32.
-- **WiFiClientSecure.h**: Necessário para estabelecer conexões HTTPS seguras.
-- **HTTPClient.h**: Para realizar requisições HTTP/HTTPS (GET, POST, PUT) para a API do Supabase.
+- **TinyGPSPlus.h**: Para procesar y decodificar mensajes NMEA del módulo GPS.
+- **WiFi.h**: Para gestionar la conexión Wi-Fi del ESP32.
+- **WiFiClientSecure.h**: Necesaria para conexiones HTTPS seguras.
+- **HTTPClient.h**: Para realizar solicitudes HTTP/HTTPS (GET, POST, PUT) hacia la API de Supabase.
 
-## 📝 Parâmetros Críticos (Arquivo `.ino`)
+## 📝 Parámetros Críticos (Archivo `.ino`)
 
-Antes de compilar, modifique as seguintes constantes na seção `// ================== CONFIG ==================` do código:
+Antes de compilar, modifica las siguientes constantes en la sección `// ================== CONFIG ==================` del código:
 
-| Constante               | Descrição                                                      | Exemplo                        |
-|-------------------------|----------------------------------------------------------------|--------------------------------|
-| **WIFI_SSID**            | Nome da sua rede Wi-Fi                                         | `"Mi_Casa_WiFi"`               |
-| **WIFI_PASS**            | Senha da sua rede Wi-Fi                                        | `"password123"`                |
-| **SUPABASE_URL**         | URL do endpoint da Função Edge (API)                           | `https://[ref].supabase.co/functions/v1/tracker` |
-| **SUPABASE_API_KEY**     | Chave API anônima do Supabase para autenticação.               | `eyJhbGciOi...`                |
-| **DEVICE_ID**            | Identificador único para este dispositivo rastreador.          | `"CUTETAG_004"`                |
+| Constante               | Descripción                                                       | Ejemplo                        |
+|-------------------------|-------------------------------------------------------------------|--------------------------------|
+| **WIFI_SSID**            | Nombre de tu red Wi-Fi                                            | `"Mi_Casa_WiFi"`               |
+| **WIFI_PASS**            | Contraseña de tu red Wi-Fi                                        | `"password123"`                |
+| **SUPABASE_URL**         | URL del endpoint de la Edge Function (API)                        | `https://[ref].supabase.co/functions/v1/tracker` |
+| **SUPABASE_API_KEY**     | Llave API anónima de Supabase para autenticación.                | `eyJhbGciOi...`                |
+| **DEVICE_ID**            | Identificador único para este dispositivo rastreador.             | `"CUTETAG_004"`                |
 
-## 🧭 Lógica de Funcionamento
+## 🧭 Lógica de Funcionamiento
 
-O sistema opera em um loop contínuo de detecção, controle de estado e sincronização:
+El sistema opera en un ciclo continuo de detección, control de estado y sincronización:
 
-### 1. Deteção de Estado (`updateStateMachine`)
+### 1. Detección de Estado (`updateStateMachine`)
 
-O dispositivo usa os dados GPS para determinar um dos quatro estados possíveis:
+El dispositivo utiliza los datos del GPS para determinar uno de los cuatro estados posibles:
 
-| Estado                      | Condição                                                                                          | LED |
-|-----------------------------|---------------------------------------------------------------------------------------------------|-----|
-| **STATE_ALL_FAIL_BLINK**     | Sem fix GPS válido e nunca teve um fix.                                                           | Vermelho piscando |
-| **STATE_GPS_FAIL_MORSE**     | Fix GPS obsoleto ou inválido, mas já teve um fix antes.                                           | Vermelho fixo, Amarelo em SOS (Morse) |
-| **STATE_GPS_OK_STATIC**      | GPS OK e a velocidade é menor que 1,5 km/h e a distância percorrida é menor que 3 metros.        | Verde fixo, Amarelo fixo |
-| **STATE_GPS_OK_MOVING**      | GPS OK e o dispositivo está em movimento, com velocidade ou distância acima do limite.           | Verde fixo, Amarelo piscando |
+| Estado                    | Condición                                                                                               | LED |
+|---------------------------|-----------------------------------------------------------------------------------------------------------|-----|
+| **STATE_ALL_FAIL_BLINK**   | No hay fix GPS válido y nunca se ha obtenido uno previamente.                                            | Rojo parpadeando |
+| **STATE_GPS_FAIL_MORSE**   | El fix GPS es obsoleto o inválido, pero anteriormente sí había uno.                                      | Rojo fijo, Amarillo en SOS (Morse) |
+| **STATE_GPS_OK_STATIC**    | GPS válido, velocidad < 1.5 km/h y distancia recorrida < 3 metros.                                       | Verde fijo, Amarillo fijo |
+| **STATE_GPS_OK_MOVING**    | GPS válido y el dispositivo está en movimiento (velocidad o distancia por encima del umbral).            | Verde fijo, Amarillo parpadeando |
 
-### 2. Detecção de Movimento (`detectMovement`)
+### 2. Detección de Movimiento (`detectMovement`)
 
-O dispositivo é considerado em movimento se um dos seguintes critérios for atendido no intervalo de tempo (`MOVEMENT_WINDOW_MS`):
+El dispositivo se considera en movimiento si se cumple alguno de los siguientes criterios dentro del intervalo (`MOVEMENT_WINDOW_MS`):
 
-- A velocidade reportada pelo GPS é maior ou igual a 1,5 km/h.
-- A distância calculada entre a posição anterior (`prevFix`) e a atual (`lastFix`) é maior ou igual a 3 metros, usando a fórmula Haversine.
+- La velocidad reportada por el GPS es ≥ 1.5 km/h.
+- La distancia calculada entre la posición previa (`prevFix`) y la actual (`lastFix`) es ≥ 3 metros usando la fórmula Haversine.
 
-### 3. Sincronização com a Nuvem (`sendToCloudIfNeeded`)
+### 3. Sincronización con la Nube (`sendToCloudIfNeeded`)
 
-A comunicação com o Supabase é feita da seguinte maneira:
+La comunicación con Supabase se maneja de la siguiente forma:
 
-- **POST (Criação)**: Se for a primeira vez que os dados são enviados (variável `recordCreated = false`), um POST é realizado para criar o registro inicial do dispositivo.
-- **PUT (Atualização)**: Se o registro já existir (variável `recordCreated = true`), um PUT é feito para atualizar a latitude, longitude e o estado atual (estático ou em movimento).
+- **POST (Creación)**: Si es la primera vez que se envían datos (`recordCreated = false`), se crea el registro inicial.
+- **PUT (Actualización)**: Si el registro ya existe (`recordCreated = true`), se actualizan la latitud, longitud y el estado actual (STATIC o MOVING).
 
-#### Intervalos de Envio:
+#### Intervalos de Envío:
 
-- **Intervalo Mínimo**: O envio é bloqueado se não se passaram 2,5 segundos desde o último envio (`SEND_MIN_INTERVAL`).
-- **Intervalo de Estado**: Se não houver mudanças significativas de posição/estado, o envio será feito com intervalos mais longos:
-  - **MOVING_INTERVAL_MS**: 10 segundos (para rastreamento contínuo).
-  - **STATIC_INTERVAL_MS**: 15 segundos (para economizar recursos quando está parado).
+- **Intervalo Mínimo**: El envío se bloquea si no han pasado 2.5 segundos desde el último envío (`SEND_MIN_INTERVAL`).
+- **Intervalos según Estado**:
+  - **MOVING_INTERVAL_MS**: 10 segundos (rastreo continuo).
+  - **STATIC_INTERVAL_MS**: 15 segundos (ahorro de energía cuando está estático).
 
-## 🔌 Diagrama de Conexões (Neo-6M para ESP32)
+## 🔌 Diagrama de Conexiones (Neo-6M → ESP32)
 
-Certifique-se de conectar o módulo GPS ao porto serial secundário do ESP32 (`SerialGPS(2)`):
+Conecta el módulo GPS al puerto serial secundario del ESP32 (`SerialGPS(2)`):
 
-| Módulo GPS (Neo-6M) | ESP32                 | Função                                      |
-|---------------------|-----------------------|---------------------------------------------|
-| **VCC**             | **3.3V / 5V**          | Alimentação                                 |
-| **GND**             | **GND**                | Terra                                       |
-| **TX**              | **PIN 16 (GPS_RX_PIN)**| Recepção de dados NMEA do GPS               |
-| **RX**              | **PIN 17 (GPS_TX_PIN)**| Transmissão de dados ao GPS                 |
-
----
-
-## 🛠️ Como Rodar o Projeto
-
-1. Clone este repositório.
-2. Abra o arquivo `.ino` no Arduino IDE ou qualquer outra IDE de sua preferência.
-3. Altere as constantes de configuração conforme mencionado acima.
-4. Conecte o ESP32 à sua máquina e faça o upload do código.
-5. O dispositivo começará a rastrear sua localização e a enviar os dados para o Supabase.
+| Módulo GPS (Neo-6M) | ESP32                  | Función                                      |
+|---------------------|------------------------|----------------------------------------------|
+| **VCC**             | **3.3V / 5V**          | Alimentación                                 |
+| **GND**             | **GND**                | Tierra                                       |
+| **TX**              | **PIN 16 (GPS_RX_PIN)**| Recepción de datos NMEA                      |
+| **RX**              | **PIN 17 (GPS_TX_PIN)**| Transmisión de datos hacia el GPS            |
 
 ---
 
-## 📄 Licença
+## 🛠️ Cómo Ejecutar el Proyecto
 
-Este projeto está licenciado sob a [Licença MIT](LICENSE).
+1. Clona este repositorio.  
+2. Abre el archivo `.ino` en Arduino IDE o en tu IDE preferida.  
+3. Configura las constantes según lo indicado anteriormente.  
+4. Conecta el ESP32 a tu computadora y sube el código.  
+5. El dispositivo comenzará a rastrear su ubicación y enviar los datos a Supabase.
+
+---
+
+## 📄 Licencia
+
+Este proyecto está licenciado bajo la [Licencia MIT](LICENSE).
