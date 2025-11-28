@@ -91,6 +91,19 @@ Conecta el módulo GPS al puerto serial secundario del ESP32 (`SerialGPS(2)`):
 
 ---
 
+## 📖 Proyecto Academico Escuela Da Vinci
+- **Alumnos:**
+  - Arruda Gesualdi, Afonso
+  - Bauer, Lisa
+- **Docente:**
+  - Suárez Cores, Sebastián
+- **Materia:**
+  - Diseño y Programación Web
+ - **Año:**
+  - 2025
+
+---
+
 ## 📄 Licencia
 
 Este proyecto está licenciado bajo la [Licencia MIT](LICENSE).
